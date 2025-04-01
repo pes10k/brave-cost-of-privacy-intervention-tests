@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "main": "run.js",
+  "type": "module",
   "scripts": {
     "lint": "npx standard",
     "lint:fix": "npx standard --fix"

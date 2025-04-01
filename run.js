@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const { ArgumentParser, ArgumentDefaultsHelpFormatter } = require('argparse')
+import { setTimeout } from 'node:timers/promises'
 
-const browsersLib = require('./cost-of-privacy-intervention-tests/browsers.js')
-const testsLib = require('./cost-of-privacy-intervention-tests/tests.js')
+import { ArgumentParser, ArgumentDefaultsHelpFormatter } from 'argparse'
+
+import { makeTestClient, makeDriver } from './cost-of-privacy-intervention-tests/browsers.js'
+import { createTestServer } from './cost-of-privacy-intervention-tests/server.js'
 
 const parser = new ArgumentParser({
   description: 'Test if a browser profile has cost-of-privacy interventions ' +
@@ -27,25 +29,54 @@ parser.add_argument('--host1', {
   default: 'localhost',
   help: 'The host to use for the first server to run checks against.'
 })
-parser.add_argument('--port1', {
-  default: 8000,
+parser.add_argument('--host2', {
+  default: '127.0.0.1',
+  help: 'The host to use for the second server to run checks against.'
+})
+parser.add_argument('--port', {
+  default: 8080,
   type: 'int',
   help: 'The port to use for the first server to run checks against.'
 })
-parser.add_argument('--host2', {
-  default: '[::]',
-  help: 'The host to use for the second server to run checks against.'
-})
-parser.add_argument('--port2', {
-  default: 8000,
+parser.add_argument('--timeout', {
+  default: 3000,
   type: 'int',
-  help: 'The port to use for the second server to run checks against.'
+  help: 'Number of milliseconds to wait between test steps.'
 })
 
 const args = parser.parse_args()
 
+const onResults = (serverHandle, results) => {
+  console.log('received results')
+  console.log(JSON.stringify(results))
+}
+
 ;(async () => {
-  const driver = browsersLib.buildDriver(args.driver, args.binary, args.profile)
-  const results = testsLib.run(driver, args.host1, args.port1, args.host2,
-    args.port2)
+  const context = {
+    host1: args.host1,
+    host2: args.host2,
+    port: args.port
+  }
+
+  const driver = makeDriver(args.driver, args.binary, args.profile)
+  const client1 = makeTestClient(driver, args.host1, args.port, context)
+  const client2 = makeTestClient(driver, args.host2, args.port, context)
+
+  createTestServer(args.host1, args.host2, args.port, onResults)
+
+  await setTimeout(args.timeout)
+
+  await client1.visitClearStatePage()
+  await setTimeout(args.timeout)
+
+  await client2.visitClearStatePage()
+  await setTimeout(args.timeout)
+
+  await client1.visitTestPage()
+  await setTimeout(args.timeout)
+
+  await client2.visitTestPage()
+  await setTimeout(args.timeout)
+
+  await driver.quit()
 })()
