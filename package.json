@@ -1,0 +1,21 @@
+{
+  "name": "cost-of-privacy-intervention-tests",
+  "version": "0.0.1",
+  "description": "",
+  "main": "run.js",
+  "scripts": {
+    "lint": "npx standard",
+    "lint:fix": "npx standard --fix"
+  },
+  "author": "Peter Snyder <pes@brave.com>",
+  "license": "ISC",
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "chromedriver": "^134.0.5",
+    "geckodriver": "^5.0.0",
+    "selenium-webdriver": "^4.30.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2"
+  }
+}
