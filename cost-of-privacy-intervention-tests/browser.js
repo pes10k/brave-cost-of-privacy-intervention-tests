@@ -10,6 +10,10 @@ const geckoArguments = (url) => {
   return ['--url', cacheBustUrl]
 }
 
+const webkitArguments = (url) => {
+  return ['--url', url]
+}
+
 export const buildBrowserClient = (logger, browserType, browserCmd) => {
   let currentlyCrawlingUrl
 
@@ -27,6 +31,9 @@ export const buildBrowserClient = (logger, browserType, browserCmd) => {
           break
         case 'gecko':
           additionalArgs = geckoArguments(url)
+          break
+        case 'webkit':
+          additionalArgs = webkitArguments(url)
           break
         default:
           throw new Error(`Unknown browser family: ${browserType}`)
