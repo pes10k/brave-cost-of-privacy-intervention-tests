@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cost of Privacy Test iFrame</title>
+</head>
+
+<body>
+<h1>Empty iFrame</h1>
+<script>
+  window.onload = () => {
+    window.addEventListener('message', (event) => {
+      const localStorageValue = window.localStorage.value
+      event.source.postMessage({
+        name: event.data,
+        value: localStorageValue
+      }, '*')
+    }, false)
+  }
+</script>
+
+</body>
+</html>
