@@ -60,12 +60,14 @@ logger(args)
   const browserClient = buildBrowserClient(logger, args.browser, browserCmd)
   let closeBrowserHandle = null
   const onResults = (serverHandle, results) => {
-    if (closeBrowserHandle !== null) {
-      closeBrowserHandle.close()
-    } else {
+    // This goofy check is mostly here just to satisfy the linter, which
+    // got confused with `closeBrowserHandle` being `let` instead of `const`
+    // despite only being assigned to once.
+    if (closeBrowserHandle === null) {
       throw new Error('Trying to shutdown without a browser handle ' +
                       '(should not be possible...)')
     }
+    closeBrowserHandle.close()
     serverHandle.close()
 
     logger('Raw measurement results: ')
