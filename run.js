@@ -58,9 +58,14 @@ logger(args)
   const browserCmd = args['browser-cmd']
 
   const browserClient = buildBrowserClient(logger, args.browser, browserCmd)
-  let closeBrowserHandle
+  let closeBrowserHandle = null
   const onResults = (serverHandle, results) => {
-    closeBrowserHandle.close()
+    if (closeBrowserHandle !== null) {
+      closeBrowserHandle.close()
+    } else {
+      throw new Error('Trying to shutdown without a browser handle ' +
+                      '(should not be possible...)')
+    }
     serverHandle.close()
 
     logger('Raw measurement results: ')

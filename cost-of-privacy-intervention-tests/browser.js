@@ -39,8 +39,8 @@ export const buildBrowserClient = (logger, browserType, browserCmd) => {
           throw new Error(`Unknown browser family: ${browserType}`)
       }
 
-      const gotoCmd = browserCmd.concat(additionalArgs)
       logger('Spawning: ' + browserCmd.join(' '))
+      const gotoCmd = browserCmd.concat(additionalArgs)
       const childProcess = spawn(gotoCmd[0], gotoCmd.slice(1))
 
       return {

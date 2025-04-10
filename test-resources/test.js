@@ -4,7 +4,7 @@
 
   const storageTestMsg = 'storage test'
 
-  const imageTestKey = 'image'
+  const networkTestKey = 'network'
   const storageTestKey = 'storage'
   const fingerprintTestKey = 'fingerprint'
   const numFullReportKeys = 3
@@ -64,7 +64,7 @@
     : firstSiteOriginURL.toString() + 'test.png'
   const imgElm = document.createElement('img')
   imgElm.onload = async () => {
-    await setValueInReport(imageTestKey, `${imgElm.height}x${imgElm.width}`)
+    await setValueInReport(networkTestKey, `${imgElm.height}x${imgElm.width}`)
   }
   imgElm.src = imgRequestUrl
   document.body.appendChild(imgElm)
