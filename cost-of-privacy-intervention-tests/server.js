@@ -5,6 +5,7 @@ export const paths = {
   start: '/start',
   testPage: '/test.html',
   testJS: '/test.js',
+  testStyleSheet: '/style.css',
   fpJs: '/fpjs4.js',
   testImage: '/test.png',
   emptyDocument: '/empty.html',
@@ -17,6 +18,8 @@ const readUTF8FileSync = (path) => {
 
 const testPageHtml = readUTF8FileSync('./test-resources/test.html')
 const testPageJs = readUTF8FileSync('./test-resources/test.js')
+const blueStyleSheet = readFileSync('./test-resources/blue-style.css')
+const purpleStyleSheet = readFileSync('./test-resources/purple-style.css')
 const blueSquarePng = readFileSync('./test-resources/blue-square.png')
 const purpleSquarePng = readFileSync('./test-resources/purple-square.png')
 const iframeHtml = readFileSync('./test-resources/empty.html')
@@ -80,6 +83,15 @@ const handleGETImageRequest = (request, response) => {
   response.end(imageData)
 }
 
+const handleGETStyleSheetRequest = (request, response) => {
+  const requestReferrer = new URL(request.headers.referer)
+  const isSameSiteRequest = request.headers.host === requestReferrer.host
+  const data = isSameSiteRequest ? blueStyleSheet : purpleStyleSheet
+  response.statusCode = 200
+  response.setHeader('Content-Type', 'text/css; charset=utf-8')
+  response.end(data)
+}
+
 const handleGETReport = (request, response) => {
   const requestUrl = new URL('http://' + request.headers.host + request.url)
   response.statusCode = 200
@@ -127,6 +139,10 @@ export const createTestServer = (logger, host1, host2, port, onCompleteCallback)
 
       case paths.emptyDocument:
         handleGETEmptyDocumentRequest(request, response)
+        break
+
+      case paths.testStyleSheet:
+        handleGETStyleSheetRequest(request, response)
         break
 
       case paths.report: {

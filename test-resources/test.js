@@ -7,7 +7,8 @@
   const networkTestKey = 'network'
   const storageTestKey = 'storage'
   const fingerprintTestKey = 'fingerprint'
-  const numFullReportKeys = 3
+  const cssTestKey = 'css'
+  const numFullReportKeys = 4
 
   const report = {}
 
@@ -68,6 +69,20 @@
   }
   imgElm.src = imgRequestUrl
   document.body.appendChild(imgElm)
+
+  const styleSheetRequestUrl = isFirstTestPage
+    ? '/style.css'
+    : firstSiteOriginURL.toString() + 'style.css'
+  const linkElm = document.createElement('link')
+  linkElm.setAttribute('rel', 'stylesheet')
+  linkElm.onload = async () => {
+    const targetDiv = document.getElementById('target-div')
+    const style = getComputedStyle(targetDiv)
+    const backgroundColor = style.getPropertyValue('background-color')
+    setValueInReport(cssTestKey, backgroundColor)
+  }
+  linkElm.setAttribute('href', styleSheetRequestUrl)
+  document.head.appendChild(linkElm)
 
   import('./fpjs4.js')
     .then(FingerprintJS => FingerprintJS.load())
