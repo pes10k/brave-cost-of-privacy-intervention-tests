@@ -1,7 +1,5 @@
 import { spawn } from 'node:child_process'
 
-import { Builder, Browser } from 'selenium-webdriver'
-
 const chromiumArguments = (url) => {
   const cacheBustUrl = url + '&cache=' + Date.now()
   return [cacheBustUrl]
@@ -17,20 +15,6 @@ const webkitArguments = (url) => {
 }
 
 const makeSafariClient = (logger, browserCmd) => {
-  const driver = new Builder()
-    .forBrowser(Browser.SAFARI)
-    .build()
-
-  return {
-    visitUrl: async (url) => {
-      await driver.get(url)
-      return {
-        close: async () => {
-          await driver.quit()
-        }
-      }
-    }
-  }
 }
 
 const makeOtherClient = async (logger, browserCmd, browserType) => {
