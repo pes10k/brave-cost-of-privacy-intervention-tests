@@ -11,8 +11,7 @@
   "author": "Peter Snyder <pes@brave.com>",
   "license": "ISC",
   "dependencies": {
-    "argparse": "^2.0.1",
-    "selenium-webdriver": "^4.34.0"
+    "argparse": "^2.0.1"
   },
   "devDependencies": {
     "standard": "^17.1.2"
