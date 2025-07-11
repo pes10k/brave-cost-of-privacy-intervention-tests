@@ -1,6 +1,6 @@
 {
   "name": "cost-of-privacy-intervention-tests",
-  "version": "0.2",
+  "version": "0.3",
   "description": "Tests to determine whether a browser and profile is configured to enforce different privacy protections.",
   "main": "run.js",
   "type": "module",
@@ -11,14 +11,15 @@
   "author": "Peter Snyder <pes@brave.com>",
   "license": "ISC",
   "dependencies": {
-    "argparse": "^2.0.1"
+    "argparse": "^2.0.1",
+    "selenium-webdriver": "^4.34.0"
   },
   "devDependencies": {
     "standard": "^17.1.2"
   },
   "standard": {
     "ignore": [
-      "test-resources/fpjs4.js"
+      "test-resources/*"
     ]
   }
 }

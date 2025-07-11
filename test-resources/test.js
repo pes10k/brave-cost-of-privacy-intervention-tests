@@ -71,13 +71,14 @@
   document.body.appendChild(imgElm)
 
   const styleSheetRequestUrl = isFirstTestPage
-    ? '/style.css'
+    ? `http://${pageUrl.host}/style.css`
     : firstSiteOriginURL.toString() + 'style.css'
   const linkElm = document.createElement('link')
+  linkElm.setAttribute('crossorigin', 'anonymous')
   linkElm.setAttribute('rel', 'stylesheet')
   linkElm.onload = async () => {
     const targetDiv = document.getElementById('target-div')
-    const style = getComputedStyle(targetDiv)
+    const style = window.getComputedStyle(targetDiv)
     const backgroundColor = style.getPropertyValue('background-color')
     setValueInReport(cssTestKey, backgroundColor)
   }

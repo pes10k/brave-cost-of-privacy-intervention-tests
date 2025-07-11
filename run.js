@@ -3,7 +3,7 @@
 import { ArgumentParser, ArgumentDefaultsHelpFormatter } from 'argparse'
 
 import { makeLogger } from './cost-of-privacy-intervention-tests/logging.js'
-import { buildBrowserClient } from './cost-of-privacy-intervention-tests/browser.js'
+import { buildClient } from './cost-of-privacy-intervention-tests/browser.js'
 import { createTestServer, paths as testPaths } from './cost-of-privacy-intervention-tests/server.js'
 
 const parser = new ArgumentParser({
@@ -13,9 +13,13 @@ const parser = new ArgumentParser({
   formatter_class: ArgumentDefaultsHelpFormatter
 })
 parser.add_argument('--browser', {
-  choices: ['chromium', 'gecko', 'webkit'],
+  choices: ['chromium', 'gecko', 'webkit', 'none'],
   required: true,
-  help: 'Which browser family is being tested.'
+  help: 'Which browser family is being tested. If "None", then the tests ' +
+        'are served without trying to automate any browser.'
+  // help: 'Which browser family is being tested. Note that Safari is a ' +
+  //       'distinct option from webkit because testing with Safari requires ' +
+  //       'using Selenium/WebDriver, and so requires additional configuration.'
 })
 parser.add_argument('--host1', {
   default: 'localhost',
@@ -57,17 +61,21 @@ logger(args)
 ;(async () => {
   const browserCmd = args['browser-cmd']
 
-  const browserClient = buildBrowserClient(logger, args.browser, browserCmd)
+  if (args.browser !== 'none') {
+    const browserClient = await buildClient(logger, browserCmd, args.browser)
+  }
   let closeBrowserHandle = null
   const onResults = (serverHandle, results) => {
     // This goofy check is mostly here just to satisfy the linter, which
     // got confused with `closeBrowserHandle` being `let` instead of `const`
     // despite only being assigned to once.
-    if (closeBrowserHandle === null) {
-      throw new Error('Trying to shutdown without a browser handle ' +
-                      '(should not be possible...)')
+    if (args.browser !== 'none') {
+      if (closeBrowserHandle === null) {
+        throw new Error('Trying to shutdown without a browser handle ' +
+                        '(should not be possible...)')
+      }
+      closeBrowserHandle.close()
     }
-    closeBrowserHandle.close()
     serverHandle.close()
 
     logger('Raw measurement results: ')
@@ -97,6 +105,8 @@ logger(args)
   const startTestUrl = new URL(`http://${args.host1}:${args.port}${testPaths.start}`)
   startTestUrl.search = new URLSearchParams(context)
 
-  logger('Opening browser to URL: ' + startTestUrl.toString())
-  closeBrowserHandle = browserClient.visitUrl(startTestUrl.toString())
+  logger('Opening URL: ' + startTestUrl.toString())
+  if (args.browser !== 'none') {
+    closeBrowserHandle = await browserClient.visitUrl(startTestUrl.toString())
+  }
 })()

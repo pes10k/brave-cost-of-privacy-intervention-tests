@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process'
 
+import { Builder, Browser } from 'selenium-webdriver'
+
 const chromiumArguments = (url) => {
   const cacheBustUrl = url + '&cache=' + Date.now()
   return [cacheBustUrl]
@@ -14,16 +16,26 @@ const webkitArguments = (url) => {
   return ['--url', url]
 }
 
-export const buildBrowserClient = (logger, browserType, browserCmd) => {
-  let currentlyCrawlingUrl
+const makeSafariClient = (logger, browserCmd) => {
+  const driver = new Builder()
+    .forBrowser(Browser.SAFARI)
+    .build()
 
   return {
-    visitUrl: (url) => {
-      if (currentlyCrawlingUrl !== undefined) {
-        throw new Error(`Already crawling ${currentlyCrawlingUrl}`)
+    visitUrl: async (url) => {
+      await driver.get(url)
+      return {
+        close: async () => {
+          await driver.quit()
+        }
       }
-      currentlyCrawlingUrl = url
+    }
+  }
+}
 
+const makeOtherClient = async (logger, browserCmd, browserType) => {
+  return {
+    visitUrl: async (url) => {
       let additionalArgs = []
       switch (browserType) {
         case 'chromium':
@@ -44,10 +56,18 @@ export const buildBrowserClient = (logger, browserType, browserCmd) => {
       const childProcess = spawn(gotoCmd[0], gotoCmd.slice(1))
 
       return {
-        close: () => {
+        close: async () => {
           return childProcess.kill()
         }
       }
     }
+  }
+}
+
+export const buildClient = async (logger, browserCmd, browserType) => {
+  if (browserType === 'safari') {
+    return await makeSafariClient(logger, browserCmd)
+  } else {
+    return await makeOtherClient(logger, browserCmd, browserType)
   }
 }

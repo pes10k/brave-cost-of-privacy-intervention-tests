@@ -57,6 +57,7 @@ const handleGETStartRequest = (request, response, context) => {
 
 const handleGETHtmlRequest = (data, request, response) => {
   response.statusCode = 200
+  response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'text/html; charset=utf-8')
   response.end(data)
 }
@@ -66,6 +67,7 @@ const handleGETEmptyDocumentRequest = handleGETHtmlRequest.bind(undefined, ifram
 
 const handleGETJSRequest = (data, request, response) => {
   response.statusCode = 200
+  response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'application/javascript; charset=utf-8')
   response.end(data)
 }
@@ -78,6 +80,7 @@ const handleGETImageRequest = (request, response) => {
   const isSameSiteRequest = request.headers.host === requestReferrer.host
   const imageData = isSameSiteRequest ? blueSquarePng : purpleSquarePng
   response.statusCode = 200
+  response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'image/png')
   response.setHeader('Cache-Control', 'max-age=180, public')
   response.end(imageData)
@@ -88,6 +91,7 @@ const handleGETStyleSheetRequest = (request, response) => {
   const isSameSiteRequest = request.headers.host === requestReferrer.host
   const data = isSameSiteRequest ? blueStyleSheet : purpleStyleSheet
   response.statusCode = 200
+  response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'text/css; charset=utf-8')
   response.end(data)
 }
@@ -95,6 +99,7 @@ const handleGETStyleSheetRequest = (request, response) => {
 const handleGETReport = (request, response) => {
   const requestUrl = new URL('http://' + request.headers.host + request.url)
   response.statusCode = 200
+  response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'text/plain')
   response.end('Report received')
   return JSON.parse(requestUrl.searchParams.get('report'))
