@@ -59,18 +59,19 @@ logger('Running with arguments: ')
 logger(args)
 
 ;(async () => {
+  let closeBrowserHandle, browserClient
   const browserCmd = args['browser-cmd']
 
   if (args.browser !== 'none') {
-    const browserClient = await buildClient(logger, browserCmd, args.browser)
+    browserClient = await buildClient(logger, browserCmd, args.browser)
   }
-  let closeBrowserHandle = null
+
   const onResults = (serverHandle, results) => {
     // This goofy check is mostly here just to satisfy the linter, which
     // got confused with `closeBrowserHandle` being `let` instead of `const`
     // despite only being assigned to once.
     if (args.browser !== 'none') {
-      if (closeBrowserHandle === null) {
+      if (closeBrowserHandle === undefined) {
         throw new Error('Trying to shutdown without a browser handle ' +
                         '(should not be possible...)')
       }
@@ -83,7 +84,7 @@ logger(args)
 
     const summary = {}
     let allTestsPass = true
-    for (const key of Object.keys(results.report1)) {
+    for (const key of Object.keys(results.report1).sort()) {
       const isTestPass = results.report1[key] !== results.report2[key]
       summary[key] = isTestPass
       if (!isTestPass) {
@@ -106,7 +107,7 @@ logger(args)
   startTestUrl.search = new URLSearchParams(context)
 
   logger('Opening URL: ' + startTestUrl.toString())
-  if (args.browser !== 'none') {
+  if (browserClient) {
     closeBrowserHandle = await browserClient.visitUrl(startTestUrl.toString())
   }
 })()
