@@ -1,6 +1,6 @@
 {
   "name": "cost-of-privacy-intervention-tests",
-  "version": "0.4",
+  "version": "0.5",
   "description": "Tests to determine whether a browser and profile is configured to enforce different privacy protections.",
   "main": "run.js",
   "type": "module",

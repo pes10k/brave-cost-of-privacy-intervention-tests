@@ -8,7 +8,7 @@ export const paths = {
   testStyleSheet: '/style.css',
   fpJs: '/fpjs4.js',
   testImage: '/test.png',
-  emptyDocument: '/empty.html',
+  iframeDocument: '/iframe.html',
   report: '/report'
 }
 
@@ -22,7 +22,7 @@ const blueStyleSheet = readFileSync('./test-resources/blue-style.css')
 const purpleStyleSheet = readFileSync('./test-resources/purple-style.css')
 const blueSquarePng = readFileSync('./test-resources/blue-square.png')
 const purpleSquarePng = readFileSync('./test-resources/purple-square.png')
-const iframeHtml = readFileSync('./test-resources/empty.html')
+const iframeHtml = readFileSync('./test-resources/iframe.html')
 const fpJs = readFileSync('./test-resources/fpjs4.js')
 
 const urlForRequest = (request) => {
@@ -63,7 +63,7 @@ const handleGETHtmlRequest = (data, request, response) => {
 }
 
 const handleGETTestPageRequest = handleGETHtmlRequest.bind(undefined, testPageHtml)
-const handleGETEmptyDocumentRequest = handleGETHtmlRequest.bind(undefined, iframeHtml)
+const handleGETImageIFrameDocumentRequest = handleGETHtmlRequest.bind(undefined, iframeHtml)
 
 const handleGETJSRequest = (data, request, response) => {
   response.statusCode = 200
@@ -75,25 +75,75 @@ const handleGETJSRequest = (data, request, response) => {
 const handleGETTestJSRequest = handleGETJSRequest.bind(undefined, testPageJs)
 const handleGETFpJSRequest = handleGETJSRequest.bind(undefined, fpJs)
 
+const imageRequests = {
+  blue: {
+    data: blueSquarePng,
+    etag: '4c9a82ce72ca2519f38d0af0abbb4cecb9fceca9',
+  },
+  purple: {
+    data: purpleSquarePng,
+    etag: 'afaed75406bd414820cea4a5119f90c259c05755'
+  }
+}
+let numImgRequests = 0
 const handleGETImageRequest = (request, response) => {
-  const requestReferrer = new URL(request.headers.referer)
-  const isSameSiteRequest = request.headers.host === requestReferrer.host
-  const imageData = isSameSiteRequest ? blueSquarePng : purpleSquarePng
+  let data = undefined
+  numImgRequests += 1
+
+  if (numImgRequests > 2) {
+    console.error('Received unexpected number of image requests: ' + numImgRequests)
+  }
+
+  switch (numImgRequests) {
+    case 1:
+      data = imageRequests.blue
+      break
+    case 2:
+    default:
+      data = imageRequests.purple
+      break
+  }
   response.statusCode = 200
   response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'image/png')
-  response.setHeader('Cache-Control', 'max-age=180, public')
-  response.end(imageData)
+  response.setHeader('Cache-Control', 'public, max-age=604800, immutable')
+  response.setHeader('ETag', data.etag)
+  response.end(data.data)
 }
 
+const styleSheetData = {
+  blue: {
+    data: blueStyleSheet,
+    etag: 'blue4c9a82ce72ca2519f38d0af0abbb4cecb9fceca9',
+  },
+  purple: {
+    data: purpleStyleSheet,
+    etag: 'purpleafaed75406bd414820cea4a5119f90c259c05755'
+  }
+}
+let numStyleSheetRequests = 0
 const handleGETStyleSheetRequest = (request, response) => {
-  const requestReferrer = new URL(request.headers.referer)
-  const isSameSiteRequest = request.headers.host === requestReferrer.host
-  const data = isSameSiteRequest ? blueStyleSheet : purpleStyleSheet
+  let data = undefined
+  numStyleSheetRequests += 1
+
+  if (numStyleSheetRequests > 2) {
+    console.error('Received unexpected number of image requests: ' + numStyleSheetRequests)
+  }
+
+  switch (numStyleSheetRequests) {
+    case 1:
+      data = styleSheetData.blue
+      break
+    case 2:
+    default:
+      data = styleSheetData.purple
+      break
+  }
   response.statusCode = 200
   response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Content-Type', 'text/css; charset=utf-8')
-  response.end(data)
+  response.setHeader('ETag', data.etag)
+  response.end(data.data)
 }
 
 const handleGETReport = (request, response) => {
@@ -112,10 +162,13 @@ const handleUnexpectedRequest = (request, response) => {
   response.end('404 Not Found\n')
 }
 
-export const createTestServer = (logger, host1, host2, port, onCompleteCallback) => {
+export const createTestServer = (logger, host1, host2, port, onCompleteCallback, debug = false) => {
   let report1, report2
 
   const context = { host1, host2, port }
+  if (debug === true) {
+    context.debug = 'debug'
+  }
 
   const server = createServer((request, response) => {
     const requestUrl = new URL('http://' + request.headers.host + request.url)
@@ -142,8 +195,8 @@ export const createTestServer = (logger, host1, host2, port, onCompleteCallback)
         handleGETImageRequest(request, response)
         break
 
-      case paths.emptyDocument:
-        handleGETEmptyDocumentRequest(request, response)
+      case paths.iframeDocument:
+        handleGETImageIFrameDocumentRequest(request, response)
         break
 
       case paths.testStyleSheet:
@@ -175,7 +228,9 @@ export const createTestServer = (logger, host1, host2, port, onCompleteCallback)
             break
 
           default:
-            throw new Error(`Received request from unexpected host: ${requestedHost}`)
+            throw new Error(
+              `Received request from unexpected host: ${requestedHost}.\n` +
+              `Expected: "${host1 + ':' + port}", "${host2 + ':' + port}"`);
         }
         if (report1 && report2) {
           onCompleteCallback(server, { report1, report2 })

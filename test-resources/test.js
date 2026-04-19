@@ -13,6 +13,7 @@
   const report = {}
 
   const setValueInReport = async (key, value) => {
+    console.log('setValueInReport', { key, value })
     report[key] = value
     if (Object.keys(report).length < numFullReportKeys) {
       return
@@ -26,64 +27,59 @@
     })
     await fetch(reportURL.toString())
 
+    const isDebug = pageUrl.searchParams.get('debug') === 'debug'
+
     if (isFirstTestPage) {
       const secondPageUrl = new URL(pageUrl)
       secondPageUrl.hostname = context.get('host2')
-      window.location = secondPageUrl.toString()
+
+      const pElm = document.getElementsByTagName('p')[0]
+      pElm.innerText = 'Test Complete. Next page is: '
+      const aElm = document.createElement('a')
+      aElm.href = secondPageUrl.toString()
+      aElm.innerText = secondPageUrl.toString()
+      pElm.appendChild(aElm)
+
+      if (isDebug === false) {
+        setTimeout(() => {
+          console.log("(parent) about to navigate to " + secondPageUrl.toString())
+          window.location = secondPageUrl.toString()
+        }, 3000)
+      }
     } else {
-      window.close()
+      if (isDebug === false) {
+        // window.close()
+      }
     }
   }
 
   window.addEventListener('message', async (event) => {
-    if (event.data.name !== storageTestMsg) {
-      return
+    console.log("RECEIVING: ", event.data)
+    if (event.data.name !== 'response') {
+      console.error('(parent) Unexpected message: ', event.data)
     }
-    await setValueInReport(storageTestKey, event.data.value || null)
+    await setValueInReport(networkTestKey, event.data.image)
+    await setValueInReport(cssTestKey, event.data.color)
+    await setValueInReport(storageTestKey, event.data.storage || null)
   }, false)
 
   // Host1 makes a same site request; host2 makes a cross site checks
   const isFirstTestPage = (pageUrl.hostname === context.get('host1'))
   const firstSiteOriginURL = new URL(`${pageUrl.protocol}//${context.get('host1')}:${pageUrl.port}`)
 
-  const localStorageValue = String(Math.random())
   if (isFirstTestPage) {
-    window.localStorage.value = localStorageValue
-    await setValueInReport(storageTestKey, localStorageValue)
-  } else {
-    const iframeElm = document.createElement('iframe')
-    iframeElm.src = firstSiteOriginURL.toString() + 'empty.html'
-    document.body.appendChild(iframeElm)
-    window.setTimeout(() => {
-      iframeElm.contentWindow.postMessage(
-        storageTestMsg, firstSiteOriginURL.toString())
-    }, 1000)
+    window.localStorage.value = String(Math.random())
   }
 
-  const imgRequestUrl = isFirstTestPage
-    ? '/test.png'
-    : firstSiteOriginURL.toString() + 'test.png'
-  const imgElm = document.createElement('img')
-  imgElm.onload = async () => {
-    await setValueInReport(networkTestKey, `${imgElm.height}x${imgElm.width}`)
-  }
-  imgElm.src = imgRequestUrl
-  document.body.appendChild(imgElm)
-
-  const styleSheetRequestUrl = isFirstTestPage
-    ? `http://${pageUrl.host}/style.css`
-    : firstSiteOriginURL.toString() + 'style.css'
-  const linkElm = document.createElement('link')
-  linkElm.setAttribute('crossorigin', 'anonymous')
-  linkElm.setAttribute('rel', 'stylesheet')
-  linkElm.onload = async () => {
-    const targetDiv = document.getElementById('target-div')
-    const style = window.getComputedStyle(targetDiv)
-    const backgroundColor = style.getPropertyValue('background-color')
-    setValueInReport(cssTestKey, backgroundColor)
-  }
-  linkElm.setAttribute('href', styleSheetRequestUrl)
-  document.head.appendChild(linkElm)
+  const imageIFrameElm = document.createElement('iframe')
+  const imageIFrameUrl = new URL(firstSiteOriginURL)
+  imageIFrameUrl.pathname = '/iframe.html'
+  imageIFrameElm.src = imageIFrameUrl.toString()
+  document.body.appendChild(imageIFrameElm)
+  setTimeout(() => {
+    imageIFrameElm.contentWindow.postMessage({ name: 'read' }, '*')
+    console.log("(parent) sent to child")
+  }, 1000)
 
   import('./fpjs4.js')
     .then(FingerprintJS => FingerprintJS.load())

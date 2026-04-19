@@ -41,6 +41,11 @@ parser.add_argument('--verbose', '-v', {
   action: 'store_true',
   help: 'Print verbose execution information.'
 })
+parser.add_argument('--debug', {
+  action: 'store_true',
+  help: 'Do not send automatic redirects and similar behaviors that make ' +
+        'debugging the application difficult.'
+})
 parser.add_argument('browser-cmd', {
   nargs: '*',
   help: 'Argument to use to launch the browser. Note that this should ' +
@@ -53,6 +58,7 @@ parser.add_argument('browser-cmd', {
 })
 
 const args = parser.parse_args()
+const isDebug = args.debug === true
 
 const logger = makeLogger(args.verbose)
 logger('Running with arguments: ')
@@ -92,17 +98,25 @@ logger(args)
       }
     }
     console.log(summary)
-    process.exit(allTestsPass ? 0 : 1)
+
+    if (isDebug === false) {
+      // process.exit(allTestsPass ? 0 : 1)
+    }
   }
 
   logger('Starting server, listening on port ' + args.port)
-  createTestServer(logger, args.host1, args.host2, args.port, onResults)
+  createTestServer(logger, args.host1, args.host2, args.port, onResults, isDebug)
 
   const context = {
     host1: args.host1,
     host2: args.host2,
-    port: args.port
+    port: args.port,
   }
+
+  if (isDebug) {
+    context.debug = 'debug'
+  }
+
   const startTestUrl = new URL(`http://${args.host1}:${args.port}${testPaths.start}`)
   startTestUrl.search = new URLSearchParams(context)
 

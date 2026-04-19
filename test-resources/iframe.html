@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colors iFrame</title>
+  <link crossorigin="anonymous" rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+<h1>Colors iFrame</h1>
+<img src="/test.png">
+<div id="target-div">target div</div>
+<script>
+  const imgElm = document.getElementsByTagName('img')[0]
+  window.addEventListener('message', (event) => {
+    console.log('(iframe) received: ', event.data)
+    if (event.data.name !== 'read') {
+      throw new Error('Unexpected message: ' + JSON.stringify(event.data));
+    }
+
+    setTimeout(() => {
+      console.log('(iframe) responding...')
+      const imgElm = document.getElementsByTagName('img')[0]
+      const divElm = document.getElementsByTagName('div')[0]
+      const style = window.getComputedStyle(divElm)
+      const backgroundColor = style.getPropertyValue('background-color')
+
+      const msg = {
+        name: 'response',
+        storage: window.localStorage.value,
+        image: `${imgElm.height}x${imgElm.width}`,
+        color: backgroundColor
+      }
+
+      event.source.postMessage(msg, '*')
+      console.log('(iframe) sent', msg)
+    }, 2500)
+    console.log('(iframe) queued: ', event.data)
+  })
+</script>
+
+</body>
+</html>
